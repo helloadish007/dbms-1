@@ -17,3 +17,11 @@ CREATE TABLE class_(
     email varchar(30),
     class_id int references class_(class_id)
     );
+  insert into student(st_fname,st_lname,addr,phone,email,class_id)
+    values('abhijith','r','address','+910000000000','email',1),
+            ('adish','ap','address','+910000000000','email',1),
+           ('ram','p','address','+910000000000','email',1),
+           ('hello','g','address','+910000000000','email',1),
+           ('y','kjhd','address','+910000000000','email',1);
+            
+            
