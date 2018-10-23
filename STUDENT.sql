@@ -36,3 +36,11 @@ CREATE TABLE class_(
       dept varchar(50) not null,
       emp_id int not null
       );
+insert into company(emp_id,name,age,address,salary,join_date)
+values(1,'paul',32,'california',20000.00,'2001-07-13');
+insert into company(emp_id,name,age,address,join_date)
+values(2,'allen',25,'texas','2007-12-13');
+insert into company(emp_id,name,age,address,salary,join_date)
+values(3,'teddy',23,'norway',20000,default);
+insert into company(emp_id,name,age,address,salary,join_date)
+values(4,'mark',25,'rich_mond',65000,'2007-12-13');    
