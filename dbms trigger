@@ -1,0 +1,49 @@
+create table t1 (id int primary key);
+
+=======-------------------------------------------
+create table t1_log(
+id int not null,
+logdate date
+);
+--------------------------------------------------
+create table t1_backup(
+id int not null,
+logdate date
+);
+insert into t1(id)
+values(122);
+--------------------------------------------------
+create or replace function t1logentry()
+returns trigger as
+$$
+begin
+	INSERT INTO t1_log values (new.id,now());
+	return new;                                
+end;
+$$
+language plpgsql;
+---------------------------------------------------------
+
+create or replace function t1logbackup()
+returns trigger as
+$$
+begin
+	INSERT INTO t1_backup values (old.id,now());
+	return old;                                
+end;
+$$
+language plpgsql;
+-----------------------------------------------------
+ //delete old
+//now:defines dates
+create trigger t1_backup_trigger before delete on t1
+for each row execute procedure t1logbackup();
+-------------------------------------------------------
+delete from t1 where id='122';
+-------------------------------------------------------
+
+before
+after
+insert
+--------------------------------------------------------------------
+select tgname from  pg_trigger;
