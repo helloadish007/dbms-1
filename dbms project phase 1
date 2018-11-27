@@ -1,0 +1,271 @@
+ranklist.sql
+
+student(reg_no,name,sem,phone,email,dob)
+sem(sem,tot_cred)
+course(course_id,course_name,sem,credits)
+series_marks(sem,reg_no,course_id,marks)
+------------------------------------------------
+create table student_log(regno int primary key not null,logdate date);
+
+create or replace function std_logentry() returns trigger as
+$$
+begin
+
+	insert into student_log (regno,logdate) values (old.reg_no,now());
+	return old;
+
+end;
+$$
+language plpgsql;
+
+create trigger student_del_log before delete on student for each row execute procedure std_logentry();
+---------------------------------------------------------------------------------------------------------------------
+delete from student where name='dff';
+---------------------------------------------------------------------------------------------------------------------
+CGPA =Σ(Ci×GPi)/ΣCi 
+Here, The subject registered by the student in all the semesters are taken into account. The failed subjects are also taken into account. The specific CGPA of each passed subjects will be also given.
+
+
+
+
+FUNCTION TO CALCULATE CGPA
+===========================
+
+
+create or replace function cgpa(reg int)returns float(2) as
+$$
+declare
+sumcred int = 0;
+s float(2) =0;
+cgpa float(2) =0;
+begin
+	select sum(c.credits*g.points) into s 
+	from grade as g,course as c,sgrade as s where s.course_id=c.course_id and s.grade=g.grade 		and s.reg_no=reg; 
+	select sum(tot_cred) into sumcred from sem where sem IN(select distinct c.sem from  		sgrade as s,course as c where s.course_id=c.course_id);   
+	cgpa = s/sumcred;
+	return cgpa;
+end;
+$$
+language plpgsql;
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+create table student(reg_no serial primary key,name varchar(15) not null,sem varchar(5) references sem(sem),phone varchar(12),email varchar(20),dob date);
+insert into student(name,sem,phone,email,dob)
+values
+('dff','S5','1234567896','bnb@gmail.com','1998-07-07');
+('nidhi','S5','1234567890','abc@gmail.com','1998-01-01'),
+('muhs','S5','1234567891','hgf@gmail.com','1998-02-02'),
+('adish','S5','1234567892','ff@gmail.com','1998-03-03'),
+('bala','S5','1234567893','vv@gmail.com','1998-04-04'),
+('vg','S5','1234567894','bb@gmail.com','1998-05-05'),
+('varsha','S5','1234567895','hb@gmail.com','1998-06-06'),
+('reppan','S5','1234567896','bnb@gmail.com','1998-07-07');
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+Create table attendance(
+reg_no int REFERENCES student(reg_no),
+course_id varchar(10) REFERENCES course(course_id),
+hr int,
+hr_present int,
+dat date,
+primary key(reg_no,hr,dat)
+);
+--------------------------------------------------------------------------------------------------------------------------------
+Insert into attendance (reg_no,course_id,hr,hr_present,dat)
+Values
+(1,'MA101',1,1,'2018-11-26'),
+(2,'MA101',1,1,'2018-11-26'),
+(3,'MA101',1,1,'2018-11-26'),
+(4,'MA101',1,1,'2018-11-26'),
+(5,'MA101',1,1,'2018-11-26'),
+(6,'MA101',1,0,'2018-11-26'),
+(7,'MA101',1,1,'2018-11-26'),
+(1,'MA201',2,1,'2018-11-26'),
+(2,'MA201',2,1,'2018-11-26'),
+(3,'MA201',2,1,'2018-11-26'),
+(4,'MA201',2,1,'2018-11-26'),
+(5,'MA201',2,1,'2018-11-26'),
+(6,'MA201',2,1,'2018-11-26'),
+(7,'MA201',2,1,'2018-11-26'),
+(1,'CS202',3,1,'2018-11-26'),
+(2,'CS202',3,1,'2018-11-26'),
+(3,'CS202',3,1,'2018-11-26'),
+(4,'CS202',3,1,'2018-11-26'),
+(5,'CS202',3,0,'2018-11-26'),
+(6,'CS202',3,1,'2018-11-26'),
+(7,'CS202',3,1,'2018-11-26'),
+(1,'CS201',4,1,'2018-11-26'),
+(2,'CS201',4,1,'2018-11-26'),
+(3,'CS201',4,1,'2018-11-26'),
+(4,'CS201',4,1,'2018-11-26'),
+(5,'CS201',4,1,'2018-11-26'),
+(6,'CS201',4,0,'2018-11-26'),
+(7,'CS201',4,1,'2018-11-26'),
+(1,'HS210',1,1,'2018-11-27'),
+(2,'HS210',1,1,'2018-11-27'),
+(3,'HS210',1,1,'2018-11-27'),
+(4,'HS210',1,1,'2018-11-27'),
+(5,'HS210',1,1,'2018-11-27'),
+(6,'HS210',1,1,'2018-11-27'),
+(7,'HS210',1,1,'2018-11-27'),
+(1,'MA202',2,1,'2018-11-27'),
+(2,'MA202',2,1,'2018-11-27'),
+(3,'MA202',2,1,'2018-11-27'),
+(4,'MA202',2,1,'2018-11-27'),
+(5,'MA202',2,1,'2018-11-27'),
+(6,'MA202',2,1,'2018-11-27'),
+(7,'MA202',2,1,'2018-11-27')
+;
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+create table grade(grade varchar(5) primary key,points float(2) not null);
+
+insert into grade(grade,points) values ('O',10.00),('A+',9.00),('A',8.50),('B+',8.00),('B',7.00),('C',6.00),('P',5.00),('F',0.00),('FE',0.00);
+
+----------------------------------------------------------------------------------------------------------------------------------------------
+create table sgrade(reg_no int references student(reg_no),course_id varchar(20) references course(course_id),grade varchar(5) references grade(grade));
+
+insert into sgrade(reg_no,course_id,grade) values
+(1,'MA101','C'),
+(2,'MA101','B+'),
+(3,'MA101','O'),
+(4,'MA101','C'),
+(5,'MA101','B+'),
+(6,'MA101','O'),
+(7,'MA101','C'),
+(1,'MA201','B+'),
+(2,'MA201','O'),
+(3,'MA201','C'),
+(4,'MA201','B+'),
+(5,'MA201','O'),
+(6,'MA201','C'),
+(7,'MA201','B+'),
+(1,'MA202','O'),
+(2,'MA202','C'),
+(3,'MA202','B+'),
+(4,'MA202','O'),
+(5,'MA202','C'),
+(6,'MA202','B+'),
+(7,'MA202','C'),
+(1,'CS202','C'),
+(2,'CS202','C'),
+(3,'CS202','B+'),
+(4,'CS202','B+'),
+(5,'CS202','B'),
+(6,'CS202','O'),
+(7,'CS202','C'),
+(1,'CS201','O'),
+(2,'CS201','O'),
+(3,'CS201','C'),
+(4,'CS201','B+'),
+(5,'CS201','C'),
+(6,'CS201','B+'),
+(7,'CS201','O'),
+(1,'HS210','B+'),
+(2,'HS210','C'),
+(3,'HS210','B+'),
+(4,'HS210','O'),
+(5,'HS210','C'),
+(6,'HS210','B+'),
+(7,'HS210','O');
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+create table sem(sem varchar(5) primary key not null,tot_cred int not null);
+insert into sem(sem,tot_cred) 
+values ('S1',24),
+('S2',23),
+('S3',24),
+('S4',23),
+('S5',23),
+('S6',23),
+('S7',22),
+('S8',18);
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+create table course(course_id varchar(20) primary key not null,course_name varchar(50) not null,sem varchar(5) references sem(sem),credits int not null);
+insert into course(course_id,course_name,sem,credits) 
+values 
+('MA101','calculus','S1',4),
+('PH100','Engineering Physics','S1',4),
+('BE102','design','S2',3),
+('EE100','electrical','S2',3),
+('BE110','Engineering graphics','S1',3),
+('BE105','icps','S1',3),
+('BE103','Introduction to Sustainable Engineering','S1',3),
+('EC100','Basics of Electronics','S1',3),
+('MA102','differential equations','S2',4),
+('CY100','Engineering chemistry','S2',4),
+('BE100','Engineering Mechanics','S2',4),
+('CS100','Basics of computer programming','S2',3),
+('MA201','laca','S3',4),
+('CS201','DCS','S3',4),
+('IT201','DSD','S3',4),
+('CS205','DS','S3',4),
+('IT203','DC','S3',3),
+('HS210','Life skills','S3',3),
+('MA202','Probability','S4',4),
+('CS202','COA','S4',4),
+('IT202','AAD','S4',4),
+('IT204','OOT','S4',3),
+('CS208','PDBD','S4',3),
+('HS200','economics','S4',3),
+('IT301','SADP','S5',4),
+('IT303','TOC','S5',4),
+('CS305','MPC','S5',3),
+('IT305','OS','S5',3),
+('IT307','CN','S5',3),
+('IT360','ELECTIVE','S5',3);
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE TABLE series_marks(reg_no int references student(reg_no),course_id varchar(20) references course(course_id),marks int not null);
+insert into series_marks(reg_no,course_id,marks)
+values
+(1,'MA101',24),
+(2,'MA101',35),
+(3,'MA101',43),
+(4,'MA101',24),
+(5,'MA101',36),
+(6,'MA101',41),
+(7,'MA101',27),
+(1,'MA201',36),
+(2,'MA201',45),
+(3,'MA201',25),
+(4,'MA201',34),
+(5,'MA201',47),
+(6,'MA201',25),
+(7,'MA201',37),
+(1,'MA202',46),
+(2,'MA202',24),
+(3,'MA202',35),
+(4,'MA202',44),
+(5,'MA202',23),
+(6,'MA202',35),
+(7,'MA202',22),
+(1,'CS202',26),
+(2,'CS202',24),
+(3,'CS202',35),
+(4,'CS202',34),
+(5,'CS202',33),
+(6,'CS202',45),
+(7,'CS202',42),
+(1,'CS201',43),
+(2,'CS201',44),
+(3,'CS201',25),
+(4,'CS201',37),
+(5,'CS201',23),
+(6,'CS201',35),
+(7,'CS201',43),
+(1,'HS210',37),
+(2,'HS210',25),
+(3,'HS210',35),
+(4,'HS210',45),
+(5,'HS210',23),
+(6,'HS210',36),
+(7,'HS210',43);
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+select distinct(reg_no),sum(marks) from (select s.reg_no,s.fname,c.course_id,d.marks from student s,course c,series_marks d,sem e where s.reg_no=d.reg_no and c.course_id=d.course_id and e.sem=c.sem and c.sem='S1') as foo;
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+select reg_no,name,total,dense_RANK() over (order by total desc) as class_rank from (select distinct(foo.reg_no),foo.name,sum(marks) as total from (select s.reg_no,s.name,c.course_id,d.marks from student s,course c,series_marks d,sem e where s.reg_no=d.reg_no and c.course_id=d.course_id and e.sem=c.sem and c.sem='S5') as foo group by foo.reg_no,foo.name order by reg_no asc) as list order by 1;
