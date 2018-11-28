@@ -1,0 +1,94 @@
+customers(c_id,cname)
+hotel(h_id,hname,class,price)
+customerbackup(c_id,cname,date)
+reservation(r_id,h_id,c_id)
+--------------------------------------------
+1.trigger....insert
+2.create table and insert 5 tuples
+3.reservation details...cname honame r_id
+4.class of hotel,x
+---------------------------------------------
+create or replace function f(class2 varchar(20),x numeric) returns int as
+$$
+declare
+	p int;
+begin
+select count(*) into p from hotel where class2=class;
+if p<=0 then
+raise exception 'does not exists';
+return 0;
+end if;
+update hotel 
+set price=price-price*(x/100)
+where class2=class;
+end;
+$$
+language plpgsql;
+============================================
+select r.r_id,c.c_id,c.cname,h.hname,h.class 
+from reservation as r,customerbackup as c,hotel as h
+where r.c_id=c.c_id and r.h_id=h.h_id ; 
+
+
+select r.r_id,c.c_id,c.cname,h.hname,h.class 
+from reservation as r,customerbackup as c,hotel as h
+where reservation cross join customerbackup cross join hotel; 
+
+=============================================
+create table customers(
+c_id serial primary key,
+cname varchar(20) not null
+);
+insert into customers(cname)
+values('adish'),
+('vg'),
+('bala'),
+('muhs'),
+('nidhi');
+==============================================
+create table hotel(
+h_id serial primary key,
+hname varchar(20) not null,
+class varchar(20) not null,
+price numeric not null
+);
+insert into hotel(hname,class,price)
+values('slice of spice','A',500),
+('pathiri','B',400),
+('zamzam','C',300),
+('thakkaram','D',200),
+('sfc','E',100);
+==============================================
+create table customerbackup(
+c_id int primary key,
+cname varchar(20) not null,
+dat date
+);
+create or replace function t2() returns trigger as
+$$
+begin
+	insert into customerbackup values(new.c_id,new.cname,now());
+	return new;
+end;
+$$
+language plpgsql;
+create trigger t17 before insert on customers
+for each row execute procedure t2();
+===============================================
+create table reservation(
+r_id serial primary key,
+h_id int references hotel(h_id),
+c_id int references customers(c_id)
+);
+insert into reservation(h_id,c_id)
+values(1,1),
+(2,2),
+(3,3),
+(4,4),
+(5,5);
+================================================
+
+
+
+
+
